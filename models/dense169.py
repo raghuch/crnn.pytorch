@@ -67,7 +67,7 @@ class _TransitionLayer(nn.Module):
 class Dense169(nn.Module):
     """dense_blk_config is a set of 4 numbers - each number number of blocks in
     a dense layer - for densenet 169 it is 6, 12, 32, 32"""
-    def __init__(self, n_layers, growth_rt, n_init_features=64,
+    def __init__(self, growth_rt, n_init_features=64,
                  bn_sz =4, dense_blk_config=(6, 12, 32, 32)):
         super(Dense169, self).__init__()
         
@@ -108,14 +108,14 @@ class Dense169(nn.Module):
         self.network.add_module('norm_final', nn.BatchNorm2d(n_features))
         #self.network.add_module('relu_final', nn.ReLU(inplace=True))
         #self.network.add_module('adapool_final', nn.AdaptiveAvgPool2d((2, 3)) ) 
-        self.linear_layer = nn.Linear(n_features*2*3, 50*62)
+        self.linear_layer = nn.Linear(n_features, 50*62)
 
         
     def forward(self, input):
         X = self.network(input)
         X = F.relu(X, inplace=True)
-        X = F.adaptive_avg_pool2d(X, (2, 3))
-        X = self.linear_layer(X)
+        X = F.adaptive_avg_pool2d(X, (1, 1))
+        #X = self.linear_layer(X)
         return X
     
 #d169 = Dense169(3, 32, 3,)
