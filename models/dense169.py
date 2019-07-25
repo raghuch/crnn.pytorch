@@ -115,7 +115,7 @@ class Dense169(nn.Module):
         X = self.network(input)
         X = F.relu(X, inplace=True)
         X = F.adaptive_avg_pool2d(X, (1, 1))
-        #X = self.linear_layer(X)
-        return X
+        X = self.linear_layer(X)
+        return X.view(-1, 50, 62)
     
 #d169 = Dense169(3, 32, 3,)
