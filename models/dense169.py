@@ -67,8 +67,8 @@ class _TransitionLayer(nn.Module):
 class Dense169(nn.Module):
     """dense_blk_config is a set of 4 numbers - each number number of blocks in
     a dense layer - for densenet 169 it is 6, 12, 32, 32"""
-    def __init__(self, n_layers, growth_rt, n_init_features,
-                 n_out_features, bn_sz =4, dense_blk_config=(6, 12, 32, 32)):
+    def __init__(self, n_layers, growth_rt, n_init_features=64,
+                 bn_sz =4, dense_blk_config=(6, 12, 32, 32)):
         super(Dense169, self).__init__()
         
         #inital convolutional layer just after the input
@@ -87,7 +87,7 @@ class Dense169(nn.Module):
         #n = 6, transition, then n = 12, followed by transition, n=32 ....
 
         n_features = n_init_features
-        for i, n_features in enumerate(dense_blk_config):
+        for i, n_layers in enumerate(dense_blk_config):
             block = _DenseBlock(
                 n_layers=n_layers,
                 n_input_features=n_features,
@@ -95,7 +95,7 @@ class Dense169(nn.Module):
                 growth_rt=growth_rt, 
             )
             self.network.add_module('dense_block%d'%(i+1), block)
-            n_features = (growth_rt*n_layers) + n_init_features
+            n_features = (growth_rt * n_layers) + n_features
             if i != len(dense_blk_config) - 1:
                 self.network.add_module('transition%d'%(i+1), 
                 _TransitionLayer(n_in_featues=n_features,
@@ -104,14 +104,18 @@ class Dense169(nn.Module):
                 n_features = n_features//2
 
 
+        #n_features = 1664 here, img size = 8 x 12
         self.network.add_module('norm_final', nn.BatchNorm2d(n_features))
-        self.network.add_module('classification', nn.Linear(n_features, n_out_features))
+        #self.network.add_module('relu_final', nn.ReLU(inplace=True))
+        #self.network.add_module('adapool_final', nn.AdaptiveAvgPool2d((2, 3)) ) 
+        self.linear_layer = nn.Linear(n_features*2*3, 50*62)
 
         
     def forward(self, input):
         X = self.network(input)
         X = F.relu(X, inplace=True)
-        X = F.avg_pool2d(X, (1, 1))
-        X = view()
+        X = F.adaptive_avg_pool2d(X, (2, 3))
+        X = self.linear_layer(X)
         return X
     
+#d169 = Dense169(3, 32, 3,)
